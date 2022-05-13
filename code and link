@@ -1,0 +1,103 @@
+thinkercad link :- https://www.tinkercad.com/embed/fndGND1saJ4?editbtn=1
+
+const int temp_trans_pin = A0;
+const int heater_pin = 13;
+const int fan_pin = 6;
+
+// set the range of desire temp
+
+float MinTemp = 20, MaxTemp = 25; // room temp (20,25)
+
+// Include the LCD library code
+#include<LiquidCrystal.h>
+
+// initialize the library with the numbers of the interface pins
+LiquidCrystal LCD (12, 11, 5, 4, 3, 2);
+
+void setup(){
+  // set up the LCD's number of columns and rows:
+  LCD.begin(16,2);
+  pinMode(heater_pin, OUTPUT);
+  pinMode(fan_pin, OUTPUT);
+  
+  // Display the desired range of temperature
+  LCD.print("Room Temp(C):");
+  LCD.setCursor(2,1);
+  LCD.print(MinTemp); LCD.print("-"); LCD.print(MaxTemp);
+  
+  delay(2000);
+}
+void loop(){
+  // Read voltage and convert to temperature (Celsius)
+  float Equ_volt = analogRead(temp_trans_pin)*5.0/1023;
+  float SensorTemp = 100.0*Equ_volt-50.0;
+  
+  // Display the sensor reading
+  LCD.clear();
+  LCD.print("Sensor Reading: ");
+  LCD.setCursor(2,1);
+  LCD.print(SensorTemp); LCD.print(" C");
+  
+  delay(2000);
+  
+  if (SensorTemp>MaxTemp){
+  LCD.clear();
+    
+    //Turn off HEATER(LED) in case if its on
+    digitalWrite(heater_pin, 0); 
+    
+    //Turn on FAN (dc motor) to regulate the temp
+    LCD.print("Temp is HIGH");
+    LCD.setCursor(0,1); LCD.print("Turn on FAN");
+    for (int i=0; i<255; i++){
+    analogWrite(fan_pin, i);
+    }
+    delay(2000);
+    
+    
+  }
+  else if (SensorTemp<MinTemp){
+  LCD.clear();
+    
+    //Turn off FAN (dc motor) in case if its on
+    LCD.clear();
+    for (int i=255; i>=0; i--){
+    analogWrite(fan_pin, i);
+    }
+    
+    
+    LCD.print("Temp is LOW");
+    LCD.setCursor(0,1); LCD.print("Turn on HEATER");
+    //Turn on HEATER(LCD)
+    digitalWrite(heater_pin, 1);
+    
+    delay(3000);
+    
+     
+  }
+  else if (SensorTemp>MinTemp && SensorTemp<MaxTemp){
+  LCD.clear();
+    //Turn of all in case its on
+    for (int i=255; i>=0; i--){
+    analogWrite(fan_pin, i);
+    }
+    
+    digitalWrite(heater_pin, 0);
+    
+    LCD.print("Temp is normal");//Normal Room temperature
+    LCD.setCursor(2,1);
+    LCD.print("Turn off all");
+    delay(3000);
+    LCD.clear();
+    
+  }
+  else {
+  LCD.clear();
+    LCD.print("Something went Wrong");
+    LCD.setCursor(2,1);
+    LCD.print("wrong in circuit");
+    delay(1000);
+    LCD.clear();
+  }
+  delay(1000);
+}
